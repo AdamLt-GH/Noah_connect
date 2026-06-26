@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Noah Connect · Grant Compliance Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- ---------------- Sidebar rail ---------------- -->
+    <aside class="rail">
+      <div class="brand">
+        <div class="brand-mark">N</div>
+        <div class="brand-text">
+          <div class="brand-name">Noah Connect</div>
+          <div class="brand-sub">Grant compliance</div>
+        </div>
+      </div>
+
+      <button class="rail-toggle" id="rail-toggle" type="button"
+              aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar">
+        <span class="chev">‹</span>
+      </button>
+
+      <nav class="nav">
+        <a class="active" href="#" title="Dashboard"><span class="ic">▦</span><span class="label">Dashboard</span></a>
+        <a href="#" title="Grants"><span class="ic">◎</span><span class="label">Grants</span></a>
+        <a href="#" title="Xero transactions"><span class="ic">⇄</span><span class="label">Xero transactions</span></a>
+        <a href="#" title="Evidence"><span class="ic">✓</span><span class="label">Evidence</span></a>
+        <a href="#" title="Deadlines"><span class="ic">◷</span><span class="label">Deadlines</span></a>
+        <a href="#" title="Settings"><span class="ic">⚙</span><span class="label">Settings</span></a>
+      </nav>
+    </aside>
+
+    <!-- ---------------- Content ---------------- -->
+    <main class="content">
+      <header class="head">
+        <div>
+          <h1>Grant Health</h1>
+          <div class="sub">What needs your attention today.</div>
+        </div>
+        <div class="head-meta">
+          <span class="sync"><span class="dot"></span>Synced from Xero · <span id="sync-time"></span></span>
+        </div>
+      </header>
+
+      <section class="grid">
+        <!-- Grant health overview — the primary surface, prioritised by risk -->
+        <div class="panel panel-grants">
+          <div class="panel-head">
+            <h2>Grant health overview</h2>
+            <span class="hint" id="grants-hint"></span>
+          </div>
+          <div id="grants"></div>
+        </div>
+
+        <!-- Compliance calendar -->
+        <div class="panel panel-cal">
+          <div class="panel-head">
+            <h2>Compliance calendar</h2>
+            <span class="hint">Next 30 days</span>
+          </div>
+          <div class="cal" id="calendar"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ---------------- Progressive disclosure drawer ---------------- -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-label="Detail" role="dialog" aria-modal="true">
+    <div class="drawer-head">
+      <div>
+        <h2 id="drawer-title"></h2>
+        <p class="intro" id="drawer-intro"></p>
+      </div>
+      <button class="drawer-close" id="drawer-close" aria-label="Close">✕</button>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </aside>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script>document.getElementById("sync-time").textContent = DATA.syncedAt;</script>
+</body>
+</html>
