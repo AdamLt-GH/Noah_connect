@@ -10,27 +10,32 @@
   <div class="app">
     <!-- ---------------- Sidebar rail ---------------- -->
     <aside class="rail">
-      <div class="brand">
-        <div class="brand-mark">N</div>
-        <div class="brand-text">
-          <div class="brand-name">Noah Connect</div>
-          <div class="brand-sub">Grant compliance</div>
-        </div>
+      <div class="rail-logo">
+        <span class="brand-ring"><img src="logo2.png" alt="" /></span>
+        <span class="brand-word">
+          <span class="bw-1">noah</span>
+          <span class="bw-2">connect</span>
+        </span>
       </div>
 
-      <button class="rail-toggle" id="rail-toggle" type="button"
-              aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar">
-        <span class="chev">‹</span>
-      </button>
+      <div class="rail-panel">
+        <div class="rail-panel-head">
+          <h2 class="rail-section">Projects</h2>
+          <button class="add-project" id="add-project" type="button"
+                  aria-label="Add project" title="Add project">+</button>
+        </div>
 
-      <nav class="nav">
-        <a class="active" href="#" title="Dashboard"><span class="ic">▦</span><span class="label">Dashboard</span></a>
-        <a href="#" title="Grants"><span class="ic">◎</span><span class="label">Grants</span></a>
-        <a href="#" title="Xero transactions"><span class="ic">⇄</span><span class="label">Xero transactions</span></a>
-        <a href="#" title="Evidence"><span class="ic">✓</span><span class="label">Evidence</span></a>
-        <a href="#" title="Deadlines"><span class="ic">◷</span><span class="label">Deadlines</span></a>
-        <a href="#" title="Settings"><span class="ic">⚙</span><span class="label">Settings</span></a>
-      </nav>
+        <div class="rail-search">
+          <input type="text" id="project-search" placeholder="Search..." autocomplete="off" />
+        </div>
+
+        <div class="project-list" id="project-list"></div>
+
+        <nav class="rail-links">
+          <a href="#">Templates</a>
+          <a href="#">Settings</a>
+        </nav>
+      </div>
     </aside>
 
     <!-- ---------------- Content ---------------- -->
@@ -38,10 +43,6 @@
       <header class="head">
         <div>
           <h1>Grant Health</h1>
-          <div class="sub">What needs your attention today.</div>
-        </div>
-        <div class="head-meta">
-          <span class="sync"><span class="dot"></span>Synced from Xero · <span id="sync-time"></span></span>
         </div>
       </header>
 
@@ -80,8 +81,35 @@
     <div class="drawer-body" id="drawer-body"></div>
   </aside>
 
+  <!-- ---------------- Add project modal ---------------- -->
+  <div class="modal-scrim" id="modal-scrim"></div>
+  <div class="modal" id="add-modal" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
+    <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+    <h2 id="add-modal-title">Add new grant project</h2>
+    <p class="modal-sub">Upload an AC grant agreement PDF to extract and create your project automatically</p>
+
+    <!-- Upload state -->
+    <div class="upload-zone" id="upload-zone" role="button" tabindex="0">
+      <div class="upload-ic">⬆</div>
+      <div class="upload-main">Drag and drop your PDF here</div>
+      <div class="upload-sub">or click to browse</div>
+      <input type="file" id="modal-file" accept="application/pdf,.pdf" hidden />
+    </div>
+
+    <!-- Loading state -->
+    <div class="modal-loading" id="modal-loading" hidden>
+      <div class="spinner"></div>
+      <div class="modal-loading-text">Extracting grant data...</div>
+    </div>
+
+    <!-- Error state -->
+    <div class="modal-error" id="modal-error" hidden>
+      <div class="modal-error-msg" id="modal-error-msg"></div>
+      <button class="btn-retry" id="modal-retry" type="button">Try again</button>
+    </div>
+  </div>
+
   <script src="data.js"></script>
   <script src="app.js"></script>
-  <script>document.getElementById("sync-time").textContent = DATA.syncedAt;</script>
 </body>
 </html>
