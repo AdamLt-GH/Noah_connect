@@ -8,9 +8,25 @@
      · Colour carries meaning only, always paired with a label/icon.
    ================================================================== */
 
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap");
+/* Poppins is the graceful fallback while Shapirit loads (or if it is absent). */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+
+/* Shapirit Regular — drop the font file at prototype/fonts/Shapirit-Regular.woff2
+   (and .woff) and it becomes the primary typeface everywhere. If the file is
+   missing the stack falls back to Poppins automatically. */
+@font-face {
+  font-family: "Shapirit";
+  src: local("Shapirit"), local("Shapirit-Regular"),
+       url("fonts/Shapirit-Regular.woff2") format("woff2"),
+       url("fonts/Shapirit-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
+  --font: "Shapirit", "Poppins", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
   /* --- Neutral, luxurious base (deliberately low contrast) --- */
   --ink:        #1c2230;   /* primary text */
   --ink-2:      #5a6477;   /* secondary text */
@@ -46,7 +62,7 @@
 html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 
 body {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font);
   color: var(--ink);
   background: var(--paper);
   line-height: 1.45;
@@ -55,18 +71,18 @@ body {
 
 /* ---------------- App shell ---------------- */
 .app {
-  display: grid; grid-template-columns: 252px 1fr; min-height: 100vh;
+  display: grid; grid-template-columns: 288px 1fr; min-height: 100vh;
   transition: grid-template-columns .26s cubic-bezier(.4,0,.2,1);
 }
 .app.collapsed { grid-template-columns: 78px 1fr; }
 
 /* ---------------- Sidebar rail ---------------- */
 .rail {
-  background: linear-gradient(180deg, var(--rail) 0%, var(--rail-2) 100%);
-  color: #cdd6e6;
-  padding: 30px 22px;
+  background: transparent;
+  color: var(--ink);
+  padding: 26px 20px;
   position: sticky; top: 0; height: 100vh;
-  display: flex; flex-direction: column;
+  display: flex; flex-direction: column; gap: 20px;
 }
 
 /* collapse toggle — sits on the rail's outer edge */
@@ -132,16 +148,19 @@ body {
   gap: 24px; margin-bottom: 30px;
 }
 .head h1 {
-  font-family: Fraunces, serif; font-weight: 600;
+  font-family: var(--font); font-weight: 600; color: var(--ink);
   font-size: 30px; letter-spacing: -0.01em; line-height: 1.1;
 }
-.head .sub { color: var(--ink-2); font-size: 14px; margin-top: 6px; }
+.head .sub { color: rgba(231, 238, 252, .78); font-size: 14px; margin-top: 6px; }
 .head-meta { display: flex; align-items: center; gap: 14px; }
 .sync {
   display: inline-flex; align-items: center; gap: 8px;
-  font-size: 12.5px; color: var(--ink-3);
+  font-size: 12.5px; color: rgba(231, 238, 252, .9);
+  background: rgba(255, 255, 255, .10);
+  border: 1px solid rgba(255, 255, 255, .14);
+  padding: 7px 14px; border-radius: 999px;
 }
-.sync .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--on-track); }
+.sync .dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; }
 
 /* ==================================================================
    MAIN GRID — grant health (left, primary) + calendar (right)
@@ -178,13 +197,16 @@ body {
 .grant:hover { background: var(--surface-2); }
 .grant:focus-visible { outline: 2px solid var(--review); outline-offset: -2px; }
 
-/* the single emphasis: a saturated state accent, only on grants that
-   need action. on-track grants get no accent, so problems pop. */
+/* a quiet emphasis: a thin state accent only on grants that need action.
+   on-track grants get none, so problems still surface without colour noise. */
 .grant::before {
-  content: ""; position: absolute; left: 0; top: 14px; bottom: 14px;
-  width: 3px; border-radius: 0 3px 3px 0; background: var(--accent);
+  content: ""; position: absolute; left: 0; top: 16px; bottom: 16px;
+  width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); opacity: .55;
 }
 .grant[data-state="on-track"]::before { display: none; }
+
+/* highlight rows on hover so the dashboard feels interactive */
+.grant:hover .grant-name { color: var(--review); }
 
 .grant-name { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
 .grant-flags { font-size: 12.5px; color: var(--ink-2); margin-top: 5px; display: flex; gap: 5px; flex-wrap: wrap; }
@@ -259,7 +281,7 @@ body {
   padding: 24px 26px 18px; border-bottom: 1px solid var(--line);
   display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
 }
-.drawer-head h2 { font-family: Fraunces, serif; font-weight: 600; font-size: 21px; letter-spacing: -0.01em; }
+.drawer-head h2 { font-family: var(--font); font-weight: 600; font-size: 21px; letter-spacing: -0.01em; }
 .drawer-head .intro { font-size: 13px; color: var(--ink-2); margin-top: 7px; line-height: 1.5; }
 .drawer-close {
   flex-shrink: 0; width: 34px; height: 34px; border-radius: 9px;
@@ -301,6 +323,205 @@ body {
   background: var(--surface-2); border: 1px solid var(--line);
 }
 .drawer-sub { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin: 22px 0 6px; }
+
+/* ==================================================================
+   Sidebar — black logo lockup + orange Projects panel   (new)
+   The orange bar spans from Projects down to just below Settings and
+   sizes to its content (no internal scrolling).
+   ================================================================== */
+.rail { --nc-orange: #E8471A; --nc-ink: #2a0f06; }
+
+/* logo: real orange ring (cropped) + black "noah connect" wordmark */
+.rail-logo { display: flex; align-items: center; gap: 11px; padding: 2px 2px 0; }
+.brand-ring { flex: 0 0 auto; width: 50px; height: 48px; overflow: hidden; }
+.brand-ring img { height: 48px; width: auto; display: block; }
+.brand-word { display: flex; flex-direction: column; line-height: 1; color: #111418; }
+.bw-1 { font-size: 25px; font-weight: 600; letter-spacing: -0.01em; }
+.bw-2 { font-size: 13px; font-weight: 500; letter-spacing: 0.16em; margin-top: 3px; }
+
+/* the orange bar */
+.rail-panel {
+  background: var(--nc-orange);
+  border-radius: 22px;
+  padding: 22px 20px 24px;
+  display: flex; flex-direction: column;
+  box-shadow: 0 14px 30px rgba(232, 71, 26, .22);
+}
+
+.rail-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 14px;
+}
+.rail-section {
+  font-size: 19px; font-weight: 600; letter-spacing: -0.01em;
+  color: var(--nc-ink);
+}
+
+/* round "+" add-project button */
+.add-project {
+  flex: 0 0 auto;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(255, 255, 255, .9); color: var(--nc-orange);
+  border: none; font: inherit; font-size: 18px; line-height: 1;
+  cursor: pointer; transition: background .15s, transform .15s;
+}
+.add-project:hover { background: #fff; transform: translateY(-1px); }
+.add-project:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* white "Search…" pill */
+.rail-search { margin-bottom: 14px; }
+.rail-search input {
+  width: 100%; border: none; border-radius: 999px;
+  background: #fff; color: var(--ink);
+  padding: 9px 16px; font: inherit; font-size: 13.5px;
+  box-shadow: 0 2px 6px rgba(140, 40, 12, .14);
+}
+.rail-search input::placeholder { color: var(--ink-3); }
+.rail-search input:focus { outline: 2px solid rgba(255, 255, 255, .85); outline-offset: 1px; }
+
+/* collapsible client tree — sized to content, never scrolls.
+   minmax(0, 1fr) stops a long client/grant name from widening the column
+   (the default `auto` track grows to max-content); names truncate instead. */
+.project-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px; }
+
+.client-head {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; min-width: 0; text-align: left; font: inherit;
+  background: none; border: none; cursor: pointer;
+  color: #fff; padding: 7px 8px; border-radius: 9px;
+  font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em;
+  transition: background .15s;
+}
+.client-head:hover { background: rgba(255, 255, 255, .16); }
+.client-chev {
+  flex: 0 0 auto; font-size: 9px; color: rgba(255, 255, 255, .85);
+  transition: transform .18s;
+}
+.client-group.collapsed .client-chev { transform: rotate(-90deg); }
+.client-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.client-count {
+  flex: 0 0 auto; font-size: 10.5px; font-weight: 600; color: #fff;
+  background: rgba(0, 0, 0, .14);
+  min-width: 19px; text-align: center;
+  padding: 1px 7px; border-radius: 999px;
+}
+
+.client-grants {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px;
+  margin: 1px 0 4px 17px; padding-left: 9px;
+  border-left: 1px solid rgba(255, 255, 255, .28);
+}
+.client-group.collapsed .client-grants { display: none; }
+
+.grant-link {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; min-width: 0; text-align: left; font: inherit;
+  background: none; border: none; cursor: pointer;
+  color: rgba(255, 255, 255, .9);
+  padding: 5px 8px; border-radius: 8px;
+  font-size: 12px; font-weight: 500;
+  transition: background .15s, color .15s;
+}
+.grant-link:hover { background: rgba(255, 255, 255, .16); color: #fff; }
+.grant-dot {
+  flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%;
+  background: #fff; opacity: .9;
+}
+.project-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.rail-links {
+  margin-top: 14px; padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, .22);
+  display: grid; gap: 2px;
+}
+.rail-links a {
+  color: var(--nc-ink); text-decoration: none;
+  font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+  padding: 7px 9px; border-radius: 9px;
+  transition: background .15s;
+}
+.rail-links a:hover { background: rgba(255, 255, 255, .2); }
+
+/* ==================================================================
+   Add-project modal   (new)
+   ================================================================== */
+.modal-scrim {
+  position: fixed; inset: 0; background: rgba(17, 25, 43, .42);
+  opacity: 0; visibility: hidden; transition: opacity .22s; z-index: 60;
+  backdrop-filter: blur(1.5px);
+}
+.modal-scrim.open { opacity: 1; visibility: visible; }
+
+.modal {
+  position: fixed; top: 50%; left: 50%; z-index: 70;
+  width: min(520px, 92vw);
+  transform: translate(-50%, -48%) scale(.98);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 30px 30px 32px;
+  transition: opacity .2s, transform .2s, visibility .2s;
+}
+.modal.open {
+  opacity: 1; visibility: visible; pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+.modal h2 {
+  font-family: var(--font); font-weight: 600;
+  font-size: 22px; letter-spacing: -0.01em; padding-right: 30px;
+}
+.modal-sub { font-size: 13px; color: var(--ink-2); margin-top: 8px; line-height: 1.5; }
+.modal-close {
+  position: absolute; top: 22px; right: 22px;
+  width: 34px; height: 34px; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--surface);
+  font-size: 16px; color: var(--ink-2); cursor: pointer; line-height: 1;
+}
+.modal-close:hover { background: var(--surface-2); }
+
+.upload-zone {
+  margin-top: 22px; padding: 40px 24px;
+  border: 2px dashed var(--line); border-radius: var(--radius-sm);
+  background: var(--surface-2); text-align: center; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.upload-zone:hover,
+.upload-zone:focus-visible { border-color: #E8471A; background: #fff; outline: none; }
+.upload-zone.dragging { border-color: #E8471A; background: #fdeee9; }
+.upload-ic {
+  width: 46px; height: 46px; margin: 0 auto 12px;
+  display: grid; place-items: center; border-radius: 50%;
+  background: #fdeee9; color: #E8471A; font-size: 20px;
+}
+.upload-main { font-size: 15px; font-weight: 600; color: var(--ink); }
+.upload-sub { font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
+
+.modal-loading {
+  margin-top: 22px; padding: 44px 24px; text-align: center;
+}
+.modal-loading-text { font-size: 14px; font-weight: 500; color: var(--ink-2); margin-top: 16px; }
+.spinner {
+  width: 38px; height: 38px; margin: 0 auto;
+  border: 3px solid var(--line); border-top-color: #E8471A;
+  border-radius: 50%; animation: nc-spin .8s linear infinite;
+}
+@keyframes nc-spin { to { transform: rotate(360deg); } }
+
+.modal-error {
+  margin-top: 22px; padding: 20px;
+  border: 1px solid var(--over-budget-bg); border-radius: var(--radius-sm);
+  background: var(--over-budget-bg);
+}
+.modal-error-msg { font-size: 13.5px; color: var(--over-budget); font-weight: 500; line-height: 1.5; }
+.btn-retry {
+  margin-top: 14px; padding: 9px 16px; border-radius: 999px;
+  background: var(--over-budget); color: #fff; border: none;
+  font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.btn-retry:hover { filter: brightness(.94); }
 
 /* ---------------- Responsive ---------------- */
 @media (max-width: 1100px) {
