@@ -32,9 +32,9 @@ const DATA = {
         { name: "Operations", allocated: 20_000, spent: 16_800 },
       ],
       milestones: [
-        { name: "Milestone 1 — Formulation", status: "on-track" },
-        { name: "Milestone 2 — Pilot batch", status: "at-risk" },
-        { name: "Milestone 3 — Acquittal", status: "at-risk" },
+        { name: "Milestone 1 — Formulation", status: "on-track", start: "2026-01-05", end: "2026-02-20" },
+        { name: "Milestone 2 — Pilot batch", status: "at-risk", start: "2026-02-20", end: "2026-04-15" },
+        { name: "Milestone 3 — Acquittal", status: "at-risk", start: "2026-04-15", end: "2026-06-30" },
       ],
     },
     {
@@ -49,8 +49,8 @@ const DATA = {
         { name: "Components", allocated: 10_000, spent: 7_900 },
       ],
       milestones: [
-        { name: "Milestone 1 — Design", status: "on-track" },
-        { name: "Milestone 2 — Integration", status: "at-risk" },
+        { name: "Milestone 1 — Design", status: "on-track", start: "2026-02-01", end: "2026-04-01" },
+        { name: "Milestone 2 — Integration", status: "at-risk", start: "2026-04-01", end: "2026-07-08" },
       ],
     },
     {
@@ -65,8 +65,8 @@ const DATA = {
         { name: "Materials", allocated: 20_000, spent: 9_000 },
       ],
       milestones: [
-        { name: "Milestone 1 — Build", status: "on-track" },
-        { name: "Milestone 2 — Test firing", status: "at-risk" },
+        { name: "Milestone 1 — Build", status: "on-track", start: "2026-02-15", end: "2026-05-01" },
+        { name: "Milestone 2 — Test firing", status: "at-risk", start: "2026-05-01", end: "2026-07-31" },
       ],
     },
     {
@@ -83,9 +83,9 @@ const DATA = {
         { name: "Operations", allocated: 15_000, spent: 11_500 },
       ],
       milestones: [
-        { name: "Milestone 1 — Prototype", status: "on-track" },
-        { name: "Milestone 2 — Field trial", status: "on-track" },
-        { name: "Milestone 3 — Certification", status: "on-track" },
+        { name: "Milestone 1 — Prototype", status: "on-track", start: "2026-01-10", end: "2026-03-15" },
+        { name: "Milestone 2 — Field trial", status: "on-track", start: "2026-03-15", end: "2026-05-30" },
+        { name: "Milestone 3 — Certification", status: "on-track", start: "2026-05-30", end: "2026-07-12" },
       ],
     },
     {
@@ -100,8 +100,8 @@ const DATA = {
         { name: "Materials", allocated: 20_000, spent: 9_000 },
       ],
       milestones: [
-        { name: "Milestone 1 — Lab validation", status: "on-track" },
-        { name: "Milestone 2 — Scale-up", status: "on-track" },
+        { name: "Milestone 1 — Lab validation", status: "on-track", start: "2026-03-01", end: "2026-06-01" },
+        { name: "Milestone 2 — Scale-up", status: "on-track", start: "2026-06-01", end: "2026-08-28" },
       ],
     },
   ],

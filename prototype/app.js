@@ -49,7 +49,7 @@ function grantRowEl(g) {
       </div>
     </button>
   `);
-  row.addEventListener("click", () => openGrantDrawer(g));
+  row.addEventListener("click", () => openProjectView(g));
   return row;
 }
 
@@ -97,7 +97,7 @@ function clientGroupEl(client, grants) {
         <span class="project-name">${g.name}</span>
       </button>
     `);
-    item.addEventListener("click", () => openGrantDrawer(g));
+    item.addEventListener("click", () => openProjectView(g));
     list.appendChild(item);
   });
 
@@ -145,60 +145,74 @@ function renderCalendar() {
   DATA.calendar.forEach((c) => wrap.appendChild(calItemEl(c)));
 }
 
-/* -------------------- Progressive disclosure: drawer -------------------- */
-const scrim = $("#scrim");
-const drawer = $("#drawer");
+/* -------------------- Project view: milestone Gantt chart -------------------- */
+const dashboardView = $("#dashboard-view");
+const projectView = $("#project-view");
+const DAY_MS = 24 * 60 * 60 * 1000;
+const WEEK_MS = 7 * DAY_MS;
+const GANTT_COLORS = ["#2f6df0", "#c77a14", "#e8471a", "#1f9d6b", "#7b54d6"];
 
-function openDrawer({ title, intro, bodyHTML }) {
-  $("#drawer-title").textContent = title;
-  $("#drawer-intro").textContent = intro || "";
-  $("#drawer-body").innerHTML = bodyHTML;
-  scrim.classList.add("open");
-  drawer.classList.add("open");
-  $("#drawer-close").focus();
-}
-function closeDrawer() {
-  scrim.classList.remove("open");
-  drawer.classList.remove("open");
+function parseISODate(iso) {
+  return ISO_DATE.test(iso || "") ? new Date(iso + "T00:00:00") : null;
 }
 
-function openGrantDrawer(g) {
-  const cats = g.budgetCategories
-    .map((c) => {
-      const pct = Math.round((c.spent / c.allocated) * 100);
-      const over = c.spent > c.allocated;
-      const color = over
-        ? "var(--over-budget)"
-        : pct >= 85
-        ? "var(--at-risk)"
-        : "var(--on-track)";
-      return `
-        <div class="cat">
-          <div class="cat-top">
-            <b>${c.name}${over ? " ⚠" : ""}</b>
-            <span class="nums">${fullMoney(c.spent)} / ${fullMoney(c.allocated)} · ${pct}%</span>
-          </div>
-          <div class="cat-track"><div class="cat-fill" style="width:${Math.min(pct, 100)}%;background:${color}"></div></div>
-        </div>`;
-    })
-    .join("");
+function renderGantt(g) {
+  const wrap = $("#gantt");
+  wrap.innerHTML = "";
 
-  const mstones = g.milestones
-    .map((m) => `<div class="mstone"><span>${m.name}</span>${chip(m.status)}</div>`)
-    .join("");
+  const ranged = (g.milestones || [])
+    .map((m) => ({ ...m, _start: parseISODate(m.start), _end: parseISODate(m.end) }))
+    .filter((m) => m._start && m._end);
 
-  const body = `
-    <div class="d-summary">
-      <div class="grant-client" style="font-size:13px;color:var(--ink-2)">${g.client} · Due ${g.nextDeadline}</div>
-      ${chip(g.state)}
-    </div>
-    <div class="drawer-sub">Budget by category</div>
-    ${cats}
-    <div class="drawer-sub">Milestones</div>
-    <div class="mstones">${mstones}</div>`;
+  if (!ranged.length) {
+    wrap.innerHTML = `<p class="gantt-empty">No milestone dates to plot yet.</p>`;
+    return;
+  }
 
-  openDrawer({ title: g.name, intro: g.flags.join(" · "), bodyHTML: body });
+  const rangeStart = Math.min(...ranged.map((m) => m._start.getTime()));
+  const rangeEnd = Math.max(...ranged.map((m) => m._end.getTime()));
+  const totalWeeks = Math.max(1, Math.ceil((rangeEnd - rangeStart) / WEEK_MS));
+  const cols = `repeat(${totalWeeks}, 1fr)`;
+
+  const header = el(`
+    <div class="gantt-row gantt-header">
+      <div class="gantt-label"></div>
+      <div class="gantt-track" style="grid-template-columns:${cols}"></div>
+    </div>`);
+  const headerTrack = header.querySelector(".gantt-track");
+  for (let w = 0; w < totalWeeks; w++) {
+    headerTrack.appendChild(el(`<div class="gantt-week">W${w + 1}</div>`));
+  }
+  wrap.appendChild(header);
+
+  ranged.forEach((m, i) => {
+    const startWeek = Math.floor((m._start.getTime() - rangeStart) / WEEK_MS);
+    const endWeek = Math.max(startWeek + 1, Math.ceil((m._end.getTime() - rangeStart) / WEEK_MS));
+    const row = el(`
+      <div class="gantt-row">
+        <div class="gantt-label">${m.name}</div>
+        <div class="gantt-track" style="grid-template-columns:${cols}">
+          <div class="gantt-bar" style="grid-column:${startWeek + 1} / ${endWeek + 1};background:${GANTT_COLORS[i % GANTT_COLORS.length]}"></div>
+        </div>
+      </div>`);
+    wrap.appendChild(row);
+  });
 }
+
+function openProjectView(g) {
+  $("#pv-client").textContent = g.client;
+  $("#pv-name").textContent = g.name;
+  renderGantt(g);
+  dashboardView.hidden = true;
+  projectView.hidden = false;
+}
+
+function closeProjectView() {
+  projectView.hidden = true;
+  dashboardView.hidden = false;
+}
+
+$("#project-back").addEventListener("click", closeProjectView);
 
 /* -------------------- Project search -------------------- */
 $("#project-search").addEventListener("input", (e) => filterProjects(e.target.value));
@@ -264,10 +278,24 @@ function grantFromExtract(x) {
       spent: 0,
     }));
 
-  const milestones = (x.milestones || []).map((m) => ({
-    name: `Milestone ${m.number} — ${m.title}`,
-    status: "on-track",
-  }));
+  // The agreement only gives each milestone a due date, not a start date, so
+  // we chain them: a milestone starts where the previous one ended (the first
+  // starts at the project start date).
+  let prevEnd = ISO_DATE.test(x.project_start_date || "") ? x.project_start_date : null;
+  const milestones = (x.milestones || [])
+    .slice()
+    .sort((a, b) => (a.number || 0) - (b.number || 0))
+    .map((m) => {
+      const end = ISO_DATE.test(m.planned_achievement_date || "") ? m.planned_achievement_date : null;
+      const start = prevEnd;
+      if (end) prevEnd = end;
+      return {
+        name: `Milestone ${m.number} — ${m.title}`,
+        status: "on-track",
+        start,
+        end,
+      };
+    });
 
   const recipient = (x.recipient && x.recipient.name) || null;
 
@@ -381,12 +409,10 @@ uploadZone.addEventListener("drop", (e) => {
 });
 
 /* -------------------- wire up -------------------- */
-scrim.addEventListener("click", closeDrawer);
-$("#drawer-close").addEventListener("click", closeDrawer);
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
-    closeDrawer();
     closeModal();
+    if (!projectView.hidden) closeProjectView();
   }
 });
 
