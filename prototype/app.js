@@ -145,18 +145,88 @@ function renderCalendar() {
   DATA.calendar.forEach((c) => wrap.appendChild(calItemEl(c)));
 }
 
-/* -------------------- Project view: milestone Gantt chart -------------------- */
+/* -------------------- Project view: summary bar + milestone Gantt -------------------- */
 const dashboardView = $("#dashboard-view");
 const projectView = $("#project-view");
 const DAY_MS = 24 * 60 * 60 * 1000;
-const WEEK_MS = 7 * DAY_MS;
 const GANTT_COLORS = ["#2f6df0", "#c77a14", "#e8471a", "#1f9d6b", "#7b54d6"];
+const GANTT_BASE_WIDTH = 860; // px — the width that fits the panel at zoom level 1
+const GANTT_END_PAD = 90; // px of breathing room for the trailing due-date label
+const GANTT_MIN_ZOOM = 1;
+const GANTT_MAX_ZOOM = 8;
 
 function parseISODate(iso) {
   return ISO_DATE.test(iso || "") ? new Date(iso + "T00:00:00") : null;
 }
 
+function formatMonthYear(date) {
+  return date.toLocaleDateString("en-AU", { month: "short", year: "numeric" });
+}
+
+/* Pick a month step (1/2/3/6/12/24/36) so ticks stay at least ~90px apart —
+   the more we zoom in (wider track), the finer the step gets. */
+function ganttMonthStep(totalDays, trackWidth) {
+  const approxMonths = Math.max(totalDays / 30.44, 1);
+  const steps = [1, 2, 3, 6, 12, 24, 36];
+  for (const step of steps) {
+    const pxPerLabel = trackWidth / (approxMonths / step);
+    if (pxPerLabel >= 90) return step;
+  }
+  return steps[steps.length - 1];
+}
+
+function renderSummary(g) {
+  const wrap = $("#summary-bar");
+  const period =
+    g.projectStartDate && g.projectEndDate
+      ? `${fmtDate(g.projectStartDate)} – ${fmtDate(g.projectEndDate)}`
+      : "—";
+  wrap.innerHTML = `
+    <div class="summary-stat">
+      <span class="summary-label">Total project cost</span>
+      <span class="summary-value">${g.totalProjectCost != null ? fullMoney(g.totalProjectCost) : "—"}</span>
+    </div>
+    <div class="summary-stat">
+      <span class="summary-label">Grant amount</span>
+      <span class="summary-value">${g.maximumFunds != null ? fullMoney(g.maximumFunds) : "—"}</span>
+    </div>
+    <div class="summary-stat">
+      <span class="summary-label">Project period</span>
+      <span class="summary-value">${period}</span>
+    </div>
+    <div class="summary-stat">
+      <span class="summary-label">Milestones</span>
+      <span class="summary-value">${(g.milestones || []).length}</span>
+    </div>`;
+}
+
+/* ----- hover tooltip: "View activities" / "View outcomes" links ----- */
+const ganttTooltip = $("#gantt-tooltip");
+const ganttTooltipActivities = $("#gantt-tooltip-activities");
+const ganttTooltipOutcomes = $("#gantt-tooltip-outcomes");
+let ganttTooltipHideTimer = null;
+
+function showGanttTooltip(bar, milestoneNumber) {
+  clearTimeout(ganttTooltipHideTimer);
+  ganttTooltipActivities.href = `activities.html?milestone=${encodeURIComponent(milestoneNumber)}`;
+  ganttTooltipOutcomes.href = `outcomes.html?milestone=${encodeURIComponent(milestoneNumber)}`;
+  const rect = bar.getBoundingClientRect();
+  ganttTooltip.hidden = false;
+  ganttTooltip.style.left = `${rect.left}px`;
+  ganttTooltip.style.top = `${rect.bottom + 8}px`;
+}
+function scheduleHideGanttTooltip() {
+  ganttTooltipHideTimer = setTimeout(() => { ganttTooltip.hidden = true; }, 150);
+}
+ganttTooltip.addEventListener("mouseenter", () => clearTimeout(ganttTooltipHideTimer));
+ganttTooltip.addEventListener("mouseleave", scheduleHideGanttTooltip);
+
+/* ----- Gantt chart: month/year axis + zoomable, scrollable bars ----- */
+let ganttGrant = null;
+let ganttZoom = GANTT_MIN_ZOOM;
+
 function renderGantt(g) {
+  ganttGrant = g;
   const wrap = $("#gantt");
   wrap.innerHTML = "";
 
@@ -164,44 +234,84 @@ function renderGantt(g) {
     .map((m) => ({ ...m, _start: parseISODate(m.start), _end: parseISODate(m.end) }))
     .filter((m) => m._start && m._end);
 
-  if (!ranged.length) {
+  const bounds = [
+    parseISODate(g.projectStartDate),
+    parseISODate(g.projectEndDate),
+    ...ranged.map((m) => m._start),
+    ...ranged.map((m) => m._end),
+  ].filter(Boolean);
+
+  if (!bounds.length) {
     wrap.innerHTML = `<p class="gantt-empty">No milestone dates to plot yet.</p>`;
     return;
   }
 
-  const rangeStart = Math.min(...ranged.map((m) => m._start.getTime()));
-  const rangeEnd = Math.max(...ranged.map((m) => m._end.getTime()));
-  const totalWeeks = Math.max(1, Math.ceil((rangeEnd - rangeStart) / WEEK_MS));
-  const cols = `repeat(${totalWeeks}, 1fr)`;
+  const rangeStart = Math.min(...bounds.map((d) => d.getTime()));
+  const rangeEnd = Math.max(...bounds.map((d) => d.getTime()));
+  const totalMs = Math.max(rangeEnd - rangeStart, DAY_MS);
+  const totalDays = totalMs / DAY_MS;
 
-  const header = el(`
-    <div class="gantt-row gantt-header">
-      <div class="gantt-label"></div>
-      <div class="gantt-track" style="grid-template-columns:${cols}"></div>
+  const trackWidth = GANTT_BASE_WIDTH * ganttZoom;
+  const innerWidth = trackWidth + GANTT_END_PAD;
+  const monthStep = ganttMonthStep(totalDays, trackWidth);
+
+  /* Axis row — month/year ticks spaced proportionally to calendar time. */
+  const axisRow = el(`
+    <div class="gantt-row gantt-axis-row">
+      <div class="gantt-label gantt-axis-spacer"></div>
+      <div class="gantt-track" style="width:${innerWidth}px"></div>
     </div>`);
-  const headerTrack = header.querySelector(".gantt-track");
-  for (let w = 0; w < totalWeeks; w++) {
-    headerTrack.appendChild(el(`<div class="gantt-week">W${w + 1}</div>`));
-  }
-  wrap.appendChild(header);
+  const axisTrack = axisRow.querySelector(".gantt-track");
 
+  const tick = new Date(rangeStart);
+  tick.setDate(1);
+  tick.setHours(0, 0, 0, 0);
+  while (tick.getTime() <= rangeEnd) {
+    const left = ((tick.getTime() - rangeStart) / totalMs) * trackWidth;
+    if (left >= -2) {
+      axisTrack.appendChild(el(`<div class="gantt-tick" style="left:${left}px">${formatMonthYear(tick)}</div>`));
+    }
+    tick.setMonth(tick.getMonth() + monthStep);
+  }
+  wrap.appendChild(axisRow);
+
+  /* One row per milestone. */
   ranged.forEach((m, i) => {
-    const startWeek = Math.floor((m._start.getTime() - rangeStart) / WEEK_MS);
-    const endWeek = Math.max(startWeek + 1, Math.ceil((m._end.getTime() - rangeStart) / WEEK_MS));
+    const left = ((m._start.getTime() - rangeStart) / totalMs) * trackWidth;
+    const width = Math.max(((m._end.getTime() - m._start.getTime()) / totalMs) * trackWidth, 8);
+    const color = GANTT_COLORS[i % GANTT_COLORS.length];
+    const label = `M${m.number} — ${m.title}`;
+
     const row = el(`
       <div class="gantt-row">
-        <div class="gantt-label">${m.name}</div>
-        <div class="gantt-track" style="grid-template-columns:${cols}">
-          <div class="gantt-bar" style="grid-column:${startWeek + 1} / ${endWeek + 1};background:${GANTT_COLORS[i % GANTT_COLORS.length]}"></div>
+        <div class="gantt-label" title="${label}">${label}</div>
+        <div class="gantt-track" style="width:${innerWidth}px">
+          <div class="gantt-bar" style="left:${left}px;width:${width}px;background:${color}"></div>
+          <div class="gantt-due" style="left:${left + width + 8}px">${fmtDate(m.end)}</div>
         </div>
       </div>`);
+
+    const bar = row.querySelector(".gantt-bar");
+    bar.addEventListener("mouseenter", () => showGanttTooltip(bar, m.number));
+    bar.addEventListener("mouseleave", scheduleHideGanttTooltip);
+
     wrap.appendChild(row);
   });
 }
 
+function setGanttZoom(next) {
+  ganttZoom = Math.min(GANTT_MAX_ZOOM, Math.max(GANTT_MIN_ZOOM, next));
+  if (ganttGrant) renderGantt(ganttGrant);
+}
+
+$("#gantt-zoom-in").addEventListener("click", () => setGanttZoom(ganttZoom * 1.6));
+$("#gantt-zoom-out").addEventListener("click", () => setGanttZoom(ganttZoom / 1.6));
+
 function openProjectView(g) {
   $("#pv-client").textContent = g.client;
   $("#pv-name").textContent = g.name;
+  ganttZoom = GANTT_MIN_ZOOM;
+  renderSummary(g);
   renderGantt(g);
   dashboardView.hidden = true;
   projectView.hidden = false;
@@ -210,6 +320,7 @@ function openProjectView(g) {
 function closeProjectView() {
   projectView.hidden = true;
   dashboardView.hidden = false;
+  ganttTooltip.hidden = true;
 }
 
 $("#project-back").addEventListener("click", closeProjectView);
@@ -290,7 +401,8 @@ function grantFromExtract(x) {
       const start = prevEnd;
       if (end) prevEnd = end;
       return {
-        name: `Milestone ${m.number} — ${m.title}`,
+        number: m.number,
+        title: m.title,
         status: "on-track",
         start,
         end,
@@ -298,6 +410,7 @@ function grantFromExtract(x) {
     });
 
   const recipient = (x.recipient && x.recipient.name) || null;
+  const totalRow = (x.budget || []).find((b) => b.is_total);
 
   return {
     name: x.project_title || recipient || "New grant",
@@ -309,14 +422,50 @@ function grantFromExtract(x) {
     flags: [
       x.project_reference_number ? `Ref ${x.project_reference_number}` : "New project",
     ],
+    projectStartDate: x.project_start_date || null,
+    projectEndDate: x.project_end_date || null,
+    maximumFunds: x.maximum_funds ?? null,
+    totalProjectCost: totalRow ? (totalRow.total ?? (totalRow.year1 || 0) + (totalRow.year2 || 0)) : null,
     budgetCategories,
     milestones,
     _reports: reports,
   };
 }
 
+/* ----- session persistence -----
+   Grants added via PDF upload only live in memory, so navigating to
+   activities.html/outcomes.html and back (a real page load) would normally
+   wipe them. We stash just the uploaded grants/calendar entries (not the
+   seed placeholders already in data.js) in sessionStorage — scoped to this
+   browser tab's session, cleared when the tab closes. */
+const SESSION_KEY = "noahConnectUploads";
+let uploadedGrants = [];
+let uploadedCalendarEntries = [];
+
+function persistUploads() {
+  try {
+    sessionStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify({ grants: uploadedGrants, calendar: uploadedCalendarEntries })
+    );
+  } catch (e) { /* storage unavailable — uploads just won't survive a reload */ }
+}
+
+function restoreUploads() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    uploadedGrants = Array.isArray(saved.grants) ? saved.grants : [];
+    uploadedCalendarEntries = Array.isArray(saved.calendar) ? saved.calendar : [];
+    DATA.grants.push(...uploadedGrants);
+    DATA.calendar.push(...uploadedCalendarEntries);
+  } catch (e) { /* ignore corrupt session data */ }
+}
+
 function addExtractedGrant(x) {
   const g = grantFromExtract(x);
+  uploadedGrants.push(g);
 
   // Centre panel — grant health overview.
   DATA.grants.push(g);
@@ -341,9 +490,12 @@ function addExtractedGrant(x) {
       blurb: period,
       state: "on-track",
     };
+    uploadedCalendarEntries.push(c);
     DATA.calendar.push(c);
     $("#calendar").appendChild(calItemEl(c));
   });
+
+  persistUploads();
 }
 
 /* ----- upload handling ----- */
@@ -416,6 +568,8 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+restoreUploads();
 renderGrants();
 renderProjects();
 renderCalendar();
+
