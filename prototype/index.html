@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Noah Connect · Grant Compliance Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- ---------------- Sidebar rail ---------------- -->
+    <aside class="rail">
+      <div class="rail-logo">
+        <span class="brand-ring"><img src="logo2.png" alt="" /></span>
+        <span class="brand-word">
+          <span class="bw-1">noah</span>
+          <span class="bw-2">connect</span>
+        </span>
+      </div>
+
+      <div class="rail-panel">
+        <div class="rail-panel-head">
+          <h2 class="rail-section">Projects</h2>
+          <button class="add-project" id="add-project" type="button"
+                  aria-label="Add project" title="Add project">+</button>
+        </div>
+
+        <div class="rail-search">
+          <input type="text" id="project-search" placeholder="Search..." autocomplete="off" />
+        </div>
+
+        <div class="project-list" id="project-list"></div>
+
+        <nav class="rail-links">
+          <a href="#">Templates</a>
+          <a href="#">Settings</a>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- ---------------- Content ---------------- -->
+    <main class="content">
+      <header class="head">
+        <div>
+          <h1>Grant Health</h1>
+        </div>
+      </header>
+
+      <section class="grid">
+        <!-- Grant health overview — the primary surface, prioritised by risk -->
+        <div class="panel panel-grants">
+          <div class="panel-head">
+            <h2>Grant health overview</h2>
+            <span class="hint" id="grants-hint"></span>
+          </div>
+          <div id="grants"></div>
+        </div>
+
+        <!-- Compliance calendar -->
+        <div class="panel panel-cal">
+          <div class="panel-head">
+            <h2>Compliance calendar</h2>
+            <span class="hint">Next 30 days</span>
+          </div>
+          <div class="cal" id="calendar"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ---------------- Progressive disclosure drawer ---------------- -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-label="Detail" role="dialog" aria-modal="true">
+    <div class="drawer-head">
+      <div>
+        <h2 id="drawer-title"></h2>
+        <p class="intro" id="drawer-intro"></p>
+      </div>
+      <button class="drawer-close" id="drawer-close" aria-label="Close">✕</button>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </aside>
+
+  <!-- ---------------- Add project modal ---------------- -->
+  <div class="modal-scrim" id="modal-scrim"></div>
+  <div class="modal" id="add-modal" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
+    <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+    <h2 id="add-modal-title">Add new grant project</h2>
+    <p class="modal-sub">Upload an AC grant agreement PDF to extract and create your project automatically</p>
+
+    <!-- Upload state -->
+    <div class="upload-zone" id="upload-zone" role="button" tabindex="0">
+      <div class="upload-ic">⬆</div>
+      <div class="upload-main">Drag and drop your PDF here</div>
+      <div class="upload-sub">or click to browse</div>
+      <input type="file" id="modal-file" accept="application/pdf,.pdf" hidden />
+    </div>
+
+    <!-- Loading state -->
+    <div class="modal-loading" id="modal-loading" hidden>
+      <div class="spinner"></div>
+      <div class="modal-loading-text">Extracting grant data...</div>
+    </div>
+
+    <!-- Error state -->
+    <div class="modal-error" id="modal-error" hidden>
+      <div class="modal-error-msg" id="modal-error-msg"></div>
+      <button class="btn-retry" id="modal-retry" type="button">Try again</button>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
