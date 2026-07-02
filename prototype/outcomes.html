@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Milestone Outcomes · Noah Connect</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="content">
+    <div class="project-view-head">
+      <a class="back-btn" href="index.html">← Back</a>
+      <div class="project-view-title">
+        <h1 id="page-heading">Milestone Outcomes</h1>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const milestone = params.get("milestone");
+    if (milestone) {
+      document.getElementById("page-heading").textContent = `Milestone Outcomes — M${milestone}`;
+    }
+  </script>
+</body>
+</html>

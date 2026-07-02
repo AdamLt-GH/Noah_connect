@@ -77,14 +77,29 @@
             <p id="pv-name"></p>
           </div>
         </div>
+
+        <div class="summary-bar" id="summary-bar"></div>
+
         <div class="panel gantt-panel">
           <div class="panel-head">
             <h2>Milestone timeline</h2>
+            <div class="gantt-zoom">
+              <button id="gantt-zoom-out" type="button" aria-label="Zoom out">−</button>
+              <button id="gantt-zoom-in" type="button" aria-label="Zoom in">+</button>
+            </div>
           </div>
-          <div class="gantt" id="gantt"></div>
+          <div class="gantt-scroll">
+            <div class="gantt" id="gantt"></div>
+          </div>
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- ---------------- Gantt bar hover tooltip ---------------- -->
+  <div class="gantt-tooltip" id="gantt-tooltip" hidden>
+    <a href="#" id="gantt-tooltip-activities" class="gantt-tooltip-link">View activities</a>
+    <a href="#" id="gantt-tooltip-outcomes" class="gantt-tooltip-link">View outcomes</a>
   </div>
 
   <!-- ---------------- Add project modal ---------------- -->
