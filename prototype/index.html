@@ -40,46 +40,52 @@
 
     <!-- ---------------- Content ---------------- -->
     <main class="content">
-      <header class="head">
-        <div>
-          <h1>Grant Health</h1>
-        </div>
-      </header>
-
-      <section class="grid">
-        <!-- Grant health overview — the primary surface, prioritised by risk -->
-        <div class="panel panel-grants">
-          <div class="panel-head">
-            <h2>Grant health overview</h2>
-            <span class="hint" id="grants-hint"></span>
+      <div id="dashboard-view">
+        <header class="head">
+          <div>
+            <h1>Grant Health</h1>
           </div>
-          <div id="grants"></div>
-        </div>
+        </header>
 
-        <!-- Compliance calendar -->
-        <div class="panel panel-cal">
-          <div class="panel-head">
-            <h2>Compliance calendar</h2>
-            <span class="hint">Next 30 days</span>
+        <section class="grid">
+          <!-- Grant health overview — the primary surface, prioritised by risk -->
+          <div class="panel panel-grants">
+            <div class="panel-head">
+              <h2>Grant health overview</h2>
+              <span class="hint" id="grants-hint"></span>
+            </div>
+            <div id="grants"></div>
           </div>
-          <div class="cal" id="calendar"></div>
+
+          <!-- Compliance calendar -->
+          <div class="panel panel-cal">
+            <div class="panel-head">
+              <h2>Compliance calendar</h2>
+              <span class="hint">Next 30 days</span>
+            </div>
+            <div class="cal" id="calendar"></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ---------------- Project view: milestone Gantt chart ---------------- -->
+      <div id="project-view" class="project-view" hidden>
+        <div class="project-view-head">
+          <button class="back-btn" id="project-back" type="button">← Back</button>
+          <div class="project-view-title">
+            <h1 id="pv-client"></h1>
+            <p id="pv-name"></p>
+          </div>
         </div>
-      </section>
+        <div class="panel gantt-panel">
+          <div class="panel-head">
+            <h2>Milestone timeline</h2>
+          </div>
+          <div class="gantt" id="gantt"></div>
+        </div>
+      </div>
     </main>
   </div>
-
-  <!-- ---------------- Progressive disclosure drawer ---------------- -->
-  <div class="scrim" id="scrim"></div>
-  <aside class="drawer" id="drawer" aria-label="Detail" role="dialog" aria-modal="true">
-    <div class="drawer-head">
-      <div>
-        <h2 id="drawer-title"></h2>
-        <p class="intro" id="drawer-intro"></p>
-      </div>
-      <button class="drawer-close" id="drawer-close" aria-label="Close">✕</button>
-    </div>
-    <div class="drawer-body" id="drawer-body"></div>
-  </aside>
 
   <!-- ---------------- Add project modal ---------------- -->
   <div class="modal-scrim" id="modal-scrim"></div>
